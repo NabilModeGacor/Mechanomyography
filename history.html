@@ -37,7 +37,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <h1 class="serif" style="font-size:26px;margin-bottom:4px">Riwayat Rehabilitasi</h1>
       <p class="sm muted">Progres kekuatan otot tangan dari waktu ke waktu — data Firebase.</p>
     </div>
-    <button class="btn btn-o" onclick="exportPDFHistory()">📄 Export Laporan PDF</button>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-o" onclick="exportPDFHistory()">📄 Laporan PDF Force</button>
+      <button class="btn btn-p" style="background:#1a472a" onclick="exportPDFHistoryGabungan()">📑 Laporan PDF Gabungan</button>
+    </div>
   </div>
 
   <!-- Summary -->
@@ -66,7 +69,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="card-title" style="margin:0 0 2px">Tren Kekuatan Otot — Data Sensor FSR Firebase</div>
         <div style="font-size:11px;color:var(--muted)">Menampilkan 100 data kontraksi terakhir</div>
       </div>
-      <button class="btn btn-o btn-sm" onclick="exportCSVHistory()">📊 Export CSV</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-o btn-sm" onclick="exportCSVHistory()">📊 CSV Force</button>
+        <a href="https://api.thingspeak.com/channels/3370208/feeds.csv?api_key=9PQ4SL4CJTIVEC6D&timezone=Asia/Jakarta" target="_blank" class="btn btn-o btn-sm" style="border-color:#0891b2; color:#0891b2; text-decoration:none;">📉 CSV ADC ThingSpeak</a>
+        <button class="btn btn-p btn-sm" style="background:#0891b2" onclick="exportCSVHistoryGabungan()">🗃️ CSV Gabungan</button>
+      </div>
     </div>
     <div class="h-chart-wrap">
       <div class="h-chart-canvas">
@@ -91,7 +98,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <th>Tanggal Mulai</th>
             <th>Durasi</th>
             <th>Status</th>
-            <th>Aksi</th>
+            <th>Aksi Laporan Sesi</th>
           </tr>
         </thead>
         <tbody id="sess-body"></tbody>
@@ -149,7 +156,8 @@ function renderTable(sessions) {
       <td>
         <div style="display:flex;gap:6px">
           <button class="btn btn-o btn-sm" onclick="exportPDFSession(${s.id}, '${s.started_at}')">PDF</button>
-          <button class="btn btn-o btn-sm" onclick="exportCSVSession(${s.id}, '${s.started_at}')">CSV</button>
+          <button class="btn btn-o btn-sm" onclick="exportCSVSession(${s.id}, '${s.started_at}')">CSV Force</button>
+          <button class="btn btn-p btn-sm" style="background:#0891b2" onclick="exportCSVSessionGabungan(${s.id}, '${s.started_at}')">CSV Gabungan</button>
           <button class="btn btn-o btn-sm" style="color:var(--red);border-color:var(--red)" onclick="doDelete(${s.id})">Hapus</button>
         </div>
       </td>
@@ -267,6 +275,7 @@ async function doDelete(id) {
   } else { showToast('Password salah! Gagal menghapus','error'); }
 }
 
+// ── EXPORT PDF & CSV LAMA (KODE ASLI ANDA 100%) ──────────────────────
 function exportCSVSession(sessionId, startedAt) {
   const data = getSessionData(sessionId);
   if (!data || !data.length) { showToast('Data sesi tidak ditemukan.', 'error'); return; }
@@ -282,7 +291,7 @@ function exportCSVSession(sessionId, startedAt) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `Sesi_MMG_${u.name||'Pasien'}_${tgl}.csv`;
+  a.download = `Sesi_MMG_Force_${u.name||'Pasien'}_${tgl}.csv`;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
   showToast('CSV sesi berhasil diunduh ✓', 'success');
@@ -450,7 +459,7 @@ function exportCSVHistory() {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `Data_MMG_${u.name||'Pasien'}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `Data_MMG_Force_${u.name||'Pasien'}_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
   showToast('CSV berhasil diunduh ✓', 'success');
@@ -620,6 +629,168 @@ function exportPDFHistory() {
     })();
     setTimeout(()=>window.print(),800);
   <\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+
+// === TAMBAHAN KODE BARU: FUNGSI SINKRONISASI & EXPORT GABUNGAN ===
+
+// Mengambil data mentah dari API ThingSpeak di background
+async function fetchTSFeeds() {
+  try {
+    const res = await fetch('https://api.thingspeak.com/channels/3370208/feeds.json?api_key=9PQ4SL4CJTIVEC6D&results=8000');
+    const data = await res.json();
+    return data.feeds || [];
+  } catch(e) { return []; }
+}
+
+async function exportCSVSessionGabungan(sessionId, startedAt) {
+  const data = getSessionData(sessionId);
+  if (!data || !data.length) { showToast('Data sesi tidak ditemukan.', 'error'); return; }
+  showToast('Mencocokkan data Firebase dengan ThingSpeak...', 'info');
+  const tsFeeds = await fetchTSFeeds();
+  
+  const u = Auth.user() || {};
+  const tgl = startedAt ? startedAt.split('T')[0] : new Date().toISOString().slice(0,10);
+  let csv = 'No,Waktu,Force (N),MVC (%),Status,ADC 1,ADC 2,ADC 3,Mean ADC\n';
+  
+  data.forEach((b, i) => {
+    const tFb = new Date(b.timestamp).getTime();
+    let closestTs = null, minDiff = Infinity;
+    tsFeeds.forEach(f => {
+      const diff = Math.abs(new Date(f.created_at).getTime() - tFb);
+      if (diff < minDiff) { minDiff = diff; closestTs = f; }
+    });
+    
+    let a1='—', a2='—', a3='—', aavg='—';
+    if (closestTs && minDiff <= 30000) {
+      a1=closestTs.field1||'0'; a2=closestTs.field2||'0'; a3=closestTs.field3||'0'; aavg=closestTs.field4||'0';
+    }
+    
+    csv += `${i+1},"${new Date(b.timestamp).toLocaleString('id-ID')}",${parseFloat(b.force).toFixed(3)},${(b.mvc!==undefined?parseFloat(b.mvc).toFixed(1):'—')},${b.status||'—'},${a1},${a2},${a3},${aavg}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = `Sesi_MMG_Gabungan_${u.name||'Pasien'}_${tgl}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('CSV Gabungan diunduh ✓', 'success');
+}
+
+async function exportCSVHistoryGabungan() {
+  const events = window.__fb_events || [];
+  if (!events.length) { showToast('Belum ada data riwayat.', 'error'); return; }
+  showToast('Mencocokkan data Firebase dengan ThingSpeak...', 'info');
+  const tsFeeds = await fetchTSFeeds();
+  
+  const u = Auth.user() || {};
+  let csv = 'No,Waktu,Force (N),MVC (%),Status,ADC 1,ADC 2,ADC 3,Mean ADC\n';
+  
+  events.forEach((b, i) => {
+    const tFb = new Date(b.timestamp).getTime();
+    let closestTs = null, minDiff = Infinity;
+    tsFeeds.forEach(f => {
+      const diff = Math.abs(new Date(f.created_at).getTime() - tFb);
+      if (diff < minDiff) { minDiff = diff; closestTs = f; }
+    });
+    
+    let a1='—', a2='—', a3='—', aavg='—';
+    if (closestTs && minDiff <= 30000) {
+      a1=closestTs.field1||'0'; a2=closestTs.field2||'0'; a3=closestTs.field3||'0'; aavg=closestTs.field4||'0';
+    }
+    
+    const mvc = b.mvc !== undefined ? parseFloat(b.mvc).toFixed(1) : '—';
+    csv += `${i+1},"${new Date(b.timestamp).toLocaleString('id-ID')}",${parseFloat(b.force).toFixed(3)},${mvc},${b.status||'—'},${a1},${a2},${a3},${aavg}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = `Riwayat_MMG_Gabungan_${u.name||'Pasien'}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('CSV Gabungan diunduh ✓', 'success');
+}
+
+async function exportPDFHistoryGabungan() {
+  const events = window.__fb_events || [];
+  if (!events.length) { showToast('Belum ada data riwayat.','error'); return; }
+  showToast('Menyiapkan Laporan Gabungan...', 'info');
+  const tsFeeds = await fetchTSFeeds();
+  
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Gagal! Izinkan pop-up di browser.', 'error'); return; }
+  
+  const u = Auth.user() || {};
+  const eventsSlice = events.slice(-100);
+  const total = eventsSlice.length;
+  const avg = (eventsSlice.reduce((a,b)=>a+b.force,0)/total).toFixed(2);
+  const maxF = Math.max(...eventsSlice.map(b=>b.force)).toFixed(3);
+  
+  const rows = eventsSlice.map((b, i) => {
+    const tFb = new Date(b.timestamp).getTime();
+    let closestTs = null, minDiff = Infinity;
+    tsFeeds.forEach(f => {
+      const diff = Math.abs(new Date(f.created_at).getTime() - tFb);
+      if (diff < minDiff) { minDiff = diff; closestTs = f; }
+    });
+    
+    let a1='—', a2='—', a3='—', aavg='—';
+    if (closestTs && minDiff <= 30000) {
+      a1=closestTs.field1||'0'; a2=closestTs.field2||'0'; a3=closestTs.field3||'0'; aavg=closestTs.field4||'0';
+    }
+    
+    let sc = b.force>=normAvgN ? '#16a34a' : b.force>=normMinN ? '#e8a838' : '#dc2626';
+    return `<tr style="background:${i%2?'#f9fafb':'#fff'}">
+      <td>${i+1}</td>
+      <td>${new Date(b.timestamp).toLocaleString('id-ID')}</td>
+      <td style="font-weight:600">${parseFloat(b.force).toFixed(3)} N</td>
+      <td><span style="color:${sc};font-weight:700">${b.status||'—'}</span></td>
+      <td style="color:#0891b2">${a1}</td>
+      <td style="color:#16a34a">${a2}</td>
+      <td style="color:#e8a838">${a3}</td>
+      <td style="font-weight:600;color:#dc2626">${aavg}</td>
+    </tr>`;
+  }).join('');
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Historis Gabungan</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;} body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f8;color:#333;}
+    .cover{background:linear-gradient(135deg,#0c4a6e,#0891b2);color:#fff;padding:48px 56px 36px;}
+    .cover h1{font-size:28px;font-weight:700;margin-bottom:6px;} .cover p{opacity:.75;font-size:14px;}
+    .badge-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+    .badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:10px 16px;}
+    .badge .val{font-size:22px;font-weight:700;} .badge .lbl{font-size:11px;opacity:.7;margin-top:2px;}
+    .body{padding:32px 40px;}
+    .section{background:#fff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:24px;overflow:hidden;}
+    .section-head{background:#f0f9ff;border-bottom:1px solid #e0f2fe;padding:14px 20px;font-size:13px;font-weight:700;color:#0891b2;}
+    .section-body{padding:20px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+    th{background:#f0f9ff;color:#0891b2;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:10px 8px;text-align:left;border-bottom:2px solid #e0f2fe;}
+    td{padding:9px 8px;border-bottom:1px solid #f5f5f5;word-wrap:break-word;}
+  </style></head><body>
+  <div class="cover">
+    <h1>Laporan Historis Gabungan (Force + ADC)</h1>
+    <p>Pasien: <b>${u.name}</b> &nbsp;|&nbsp; Tanggal Export: ${new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+    <div class="badge-row">
+      <div class="badge"><div class="val">${total}</div><div class="lbl">Total Data Force</div></div>
+      <div class="badge"><div class="val">${avg} N</div><div class="lbl">Rata-rata Force</div></div>
+      <div class="badge"><div class="val">${maxF} N</div><div class="lbl">Force Tertinggi</div></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="section">
+      <div class="section-head">📋 Data Tabel Sinkronisasi (2 Detik & 15 Detik) — 100 Data Terakhir</div>
+      <div class="section-body" style="padding:0">
+        <table>
+          <thead><tr><th style="width:5%">#</th><th style="width:18%">Waktu</th><th style="width:12%">Force (N)</th><th style="width:15%">Status</th><th style="width:10%">ADC 1</th><th style="width:10%">ADC 2</th><th style="width:10%">ADC 3</th><th style="width:15%">Mean ADC</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>setTimeout(()=>window.print(),800);<\/script>
   </body></html>`);
   win.document.close();
 }
