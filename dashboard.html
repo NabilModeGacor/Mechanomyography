@@ -141,23 +141,26 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- Blok Grafik ThingSpeak ADC -->
   <div class="card" style="margin-top: 20px; margin-bottom: 24px;">
-    <div class="card-title">Grafik Sensor ADC (ThingSpeak)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:0">Grafik Sensor ADC (ThingSpeak)</div>
+      <span id="ts-fetch-status" style="font-size:11px;color:var(--muted)">Memuat...</span>
+    </div>
     <div class="g2">
-      <div style="border:1.5px solid var(--border); border-radius:12px; padding:10px; background:#fff;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-align:center; font-weight:600;">ADC 1</div>
-        <iframe width="100%" height="220" style="border:none; border-radius:8px;" src="https://thingspeak.com/channels/3370208/charts/1?bgcolor=%23ffffff&color=%230891b2&dynamic=true&results=60&type=line&update=15&api_key=9PQ4SL4CJTIVEC6D"></iframe>
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:14px; background:#fff;">
+        <div style="font-size:12px; color:#0891b2; margin-bottom:8px; text-align:center; font-weight:600;">ADC 1</div>
+        <div style="position:relative;height:180px;"><canvas id="tsChart1"></canvas></div>
       </div>
-      <div style="border:1.5px solid var(--border); border-radius:12px; padding:10px; background:#fff;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-align:center; font-weight:600;">ADC 2</div>
-        <iframe width="100%" height="220" style="border:none; border-radius:8px;" src="https://thingspeak.com/channels/3370208/charts/2?bgcolor=%23ffffff&color=%2316a34a&dynamic=true&results=60&type=line&update=15&api_key=9PQ4SL4CJTIVEC6D"></iframe>
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:14px; background:#fff;">
+        <div style="font-size:12px; color:#16a34a; margin-bottom:8px; text-align:center; font-weight:600;">ADC 2</div>
+        <div style="position:relative;height:180px;"><canvas id="tsChart2"></canvas></div>
       </div>
-      <div style="border:1.5px solid var(--border); border-radius:12px; padding:10px; background:#fff;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-align:center; font-weight:600;">ADC 3</div>
-        <iframe width="100%" height="220" style="border:none; border-radius:8px;" src="https://thingspeak.com/channels/3370208/charts/3?bgcolor=%23ffffff&color=%23e8a838&dynamic=true&results=60&type=line&update=15&api_key=9PQ4SL4CJTIVEC6D"></iframe>
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:14px; background:#fff;">
+        <div style="font-size:12px; color:#e8a838; margin-bottom:8px; text-align:center; font-weight:600;">ADC 3</div>
+        <div style="position:relative;height:180px;"><canvas id="tsChart3"></canvas></div>
       </div>
-      <div style="border:1.5px solid var(--border); border-radius:12px; padding:10px; background:#fff;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-align:center; font-weight:600;">Mean ADC</div>
-        <iframe width="100%" height="220" style="border:none; border-radius:8px;" src="https://thingspeak.com/channels/3370208/charts/4?bgcolor=%23ffffff&color=%23dc2626&dynamic=true&results=60&type=line&update=15&api_key=9PQ4SL4CJTIVEC6D"></iframe>
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:14px; background:#fff;">
+        <div style="font-size:12px; color:#dc2626; margin-bottom:8px; text-align:center; font-weight:600;">Mean ADC</div>
+        <div style="position:relative;height:180px;"><canvas id="tsChart4"></canvas></div>
       </div>
     </div>
   </div>
@@ -293,6 +296,70 @@ Firebase.startPolling((data) => {
 
   setTSStatus(true, 'Firebase — sensor aktif ✓');
 }, 2000);
+
+// ── THINGSPEAK ADC CHARTS ──────────────────────────────────────
+const TS_CH   = '3370208';
+const TS_KEY  = '9PQ4SL4CJTIVEC6D';
+const TS_URL  = `https://api.thingspeak.com/channels/${TS_CH}/feeds.json?api_key=${TS_KEY}&results=60`;
+
+const tsColors = ['#0891b2','#16a34a','#e8a838','#dc2626'];
+const tsCharts = [];
+
+function makeTsChart(canvasId, color) {
+  const ctx = document.getElementById(canvasId)?.getContext('2d');
+  if (!ctx) return null;
+  const grad = ctx.createLinearGradient(0, 0, 0, 160);
+  grad.addColorStop(0, color + '28');
+  grad.addColorStop(1, color + '00');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ data: [], borderColor: color, borderWidth: 2, pointRadius: 2, pointBackgroundColor: color, fill: true, backgroundColor: grad, tension: 0.4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#fff', borderColor: '#e8e3dc', borderWidth: 1, bodyColor: '#1c1a17', callbacks: { title: () => '', label: (i) => ` ${i.raw}` } } },
+      scales: {
+        x: { ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        y: { ticks: { color: '#9a9489', font: { size: 9 }, maxTicksLimit: 5 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+['tsChart1','tsChart2','tsChart3','tsChart4'].forEach((id, i) => {
+  tsCharts.push(makeTsChart(id, tsColors[i]));
+});
+
+async function fetchThingSpeak() {
+  try {
+    document.getElementById('ts-fetch-status').textContent = 'Memperbarui...';
+    const res = await fetch(TS_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const feeds = json.feeds || [];
+    if (!feeds.length) { document.getElementById('ts-fetch-status').textContent = 'Belum ada data ThingSpeak'; return; }
+
+    const fields = ['field1','field2','field3','field4'];
+    feeds.forEach(f => {
+      const label = new Date(f.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      fields.forEach((fk, i) => {
+        if (!tsCharts[i]) return;
+        tsCharts[i].data.labels.push(label);
+        tsCharts[i].data.datasets[0].data.push(parseFloat(f[fk]) || 0);
+      });
+    });
+    tsCharts.forEach(c => c && c.update('none'));
+
+    const last = feeds[feeds.length - 1];
+    const lastTime = new Date(last.created_at).toLocaleTimeString('id-ID');
+    document.getElementById('ts-fetch-status').textContent = `Update: ${lastTime}`;
+  } catch(e) {
+    document.getElementById('ts-fetch-status').textContent = 'Gagal memuat ThingSpeak';
+    console.warn('ThingSpeak error:', e);
+  }
+}
+
+fetchThingSpeak();
+setInterval(fetchThingSpeak, 15000); // refresh tiap 15 detik
 </script>
 </body>
 </html>

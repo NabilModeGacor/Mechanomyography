@@ -76,12 +76,14 @@ const Firebase = {
       const res = await fetch(FB_REALTIME);
       if (!res.ok) return null;
       const json = await res.json();
-      if (!json || json.force_avg === undefined) return null;
-      if (parseFloat(json.force_avg) <= 0) return null; // alat belum aktif
+      if (!json) return null;
+      // Coba beberapa kemungkinan nama field force
+      const forceRaw = json.force_avg ?? json.Force_avg ?? json.force ?? json.Force ?? null;
+      if (forceRaw === undefined || forceRaw === null) return null;
       return {
-        force:   parseFloat(json.force_avg  || 0),
-        mvc:     parseFloat(json.mvc_avg    || 0),
-        status:  json.status_avg || '\u2014',
+        force:   parseFloat(forceRaw || 0),
+        mvc:     parseFloat(json.mvc_avg ?? json.mvc ?? 0),
+        status:  json.status_avg ?? json.status ?? '\u2014',
         adc1:    parseInt(json.ADC1   || 0),
         adc2:    parseInt(json.ADC2   || 0),
         adc3:    parseInt(json.ADC3   || 0),
