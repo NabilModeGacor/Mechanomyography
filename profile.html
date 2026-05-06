@@ -60,7 +60,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <h1 class="serif" style="font-size:26px;margin-bottom:4px">Profil Pasien</h1>
       <p class="sm muted">Data pasien dan referensi nilai normal.</p>
     </div>
-    <button class="btn btn-o" onclick="openEdit()">✏️ Edit Profil</button>
+    <button class="btn btn-o" onclick="openEdit()"> Edit Profil</button>
   </div>
 
   <div class="prof-layout mb6">
@@ -331,9 +331,9 @@ function updateGaugeLive(force, norm) {
   const pct = Math.min(100, Math.max(0, (force / norm.max) * 100));
   document.getElementById('gauge-needle').style.left = pct + '%';
   const badge = document.getElementById('g-live-badge');
-  if (force >= norm.avg) { badge.textContent='✓ Normal'; badge.className='badge b-ok'; }
-  else if (force >= norm.min) { badge.textContent='⚠ Sedang'; badge.className='badge b-warn'; }
-  else { badge.textContent='✗ Rendah'; badge.className='badge b-err'; }
+  if (force >= norm.avg) { badge.textContent=' Normal'; badge.className='badge b-ok'; }
+  else if (force >= norm.min) { badge.textContent=' Sedang'; badge.className='badge b-warn'; }
+  else { badge.textContent=' Rendah'; badge.className='badge b-err'; }
 }
 
 function openEdit() {
