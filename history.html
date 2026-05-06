@@ -38,7 +38,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <p class="sm muted">Progres kekuatan otot tangan dari waktu ke waktu — data Firebase.</p>
     </div>
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-o" onclick="exportPDFHistory()">📄 Laporan PDF Force</button>
+      <button class="btn btn-o" onclick="exportPDFHistory()"> Laporan PDF Force</button>
       <button class="btn btn-p" style="background:#1a472a" onclick="exportPDFHistoryGabungan()">📑 Laporan PDF Gabungan</button>
     </div>
   </div>
@@ -70,7 +70,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div style="font-size:11px;color:var(--muted)">Menampilkan 100 data kontraksi terakhir</div>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-o btn-sm" onclick="exportCSVHistory()">📊 CSV Force</button>
+        <button class="btn btn-o btn-sm" onclick="exportCSVHistory()"> CSV Force</button>
         <a href="https://api.thingspeak.com/channels/3370208/feeds.csv?api_key=9PQ4SL4CJTIVEC6D&timezone=Asia/Jakarta" target="_blank" class="btn btn-o btn-sm" style="border-color:#0891b2; color:#0891b2; text-decoration:none;">📉 CSV ADC ThingSpeak</a>
         <button class="btn btn-p btn-sm" style="background:#0891b2" onclick="exportCSVHistoryGabungan()">🗃️ CSV Gabungan</button>
       </div>
@@ -403,11 +403,11 @@ function exportPDFSession(sessionId, startedAt) {
   </div>
   <div class="body">
     <div class="section">
-      <div class="section-head">📈 Grafik Tren Kekuatan Otot</div>
+      <div class="section-head"> Grafik Tren Kekuatan Otot</div>
       <div class="chart-wrap">${chartSVG}</div>
     </div>
     <div class="section">
-      <div class="section-head">📊 Analisis Statistik</div>
+      <div class="section-head"> Analisis Statistik</div>
       <div class="section-body">
         <div class="kpi-grid">
           <div class="kpi"><div class="v" style="color:#0891b2">${avg} N</div><div class="l">Rata-rata</div></div>
@@ -429,7 +429,7 @@ function exportPDFSession(sessionId, startedAt) {
       </div>
     </div>
     <div class="section">
-      <div class="section-head">📋 Data Detail Sesi</div>
+      <div class="section-head"> Data Detail Sesi</div>
       <div class="section-body" style="padding:0">
         <table>
           <thead><tr><th>#</th><th>Waktu</th><th>Force (N)</th><th>Status</th></tr></thead>
@@ -551,7 +551,7 @@ function exportPDFHistory() {
   </div>
   <div class="body">
     <div class="section">
-      <div class="section-head">📊 Analisis Statistik</div>
+      <div class="section-head"> Analisis Statistik</div>
       <div class="section-body">
         <div class="kpi-grid">
           <div class="kpi"><div class="v" style="color:#0891b2">${avg} N</div><div class="l">Rata-rata</div></div>
@@ -573,13 +573,13 @@ function exportPDFHistory() {
       </div>
     </div>
     <div class="section">
-      <div class="section-head">📈 Grafik Tren Kekuatan Otot</div>
+      <div class="section-head"> Grafik Tren Kekuatan Otot</div>
       <div class="section-body">
         <div id="chart-placeholder" style="width:100%;height:320px;"></div>
       </div>
     </div>
     <div class="section">
-      <div class="section-head">📋 Data Kontraksi (100 Terakhir)</div>
+      <div class="section-head"> Data Kontraksi (100 Terakhir)</div>
       <div class="section-body" style="padding:0">
         <table>
           <thead><tr><th>#</th><th>Waktu</th><th>Force (N)</th><th>Status</th></tr></thead>
@@ -781,7 +781,7 @@ async function exportPDFHistoryGabungan() {
   </div>
   <div class="body">
     <div class="section">
-      <div class="section-head">📋 Data Tabel Sinkronisasi (2 Detik & 15 Detik) — 100 Data Terakhir</div>
+      <div class="section-head"> Data Tabel Sinkronisasi (2 Detik & 15 Detik) — 100 Data Terakhir</div>
       <div class="section-body" style="padding:0">
         <table>
           <thead><tr><th style="width:5%">#</th><th style="width:18%">Waktu</th><th style="width:12%">Force (N)</th><th style="width:15%">Status</th><th style="width:10%">ADC 1</th><th style="width:10%">ADC 2</th><th style="width:10%">ADC 3</th><th style="width:15%">Mean ADC</th></tr></thead>

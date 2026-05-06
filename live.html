@@ -395,7 +395,7 @@ async function saveSession() {
   } catch(e) {
     showToast('Gagal menyimpan sesi', 'error');
   }
-  btn.disabled = false; btn.textContent = '💾 Simpan Sesi';
+  btn.disabled = false; btn.textContent = ' Simpan Sesi';
 }
 
 // ── FIREBASE POLLING ───────────────────────────────────────────
@@ -510,7 +510,7 @@ if (!win) {
   </div>
   <div class="body">
     <div class="section">
-      <div class="section-head">📊 Ringkasan Sesi</div>
+      <div class="section-head"> Ringkasan Sesi</div>
       <div class="section-body">
         <div class="kpi-grid">
           <div class="kpi"><div class="v" style="color:#0891b2">${avg} N</div><div class="l">Rata-rata Force</div></div>
@@ -526,13 +526,13 @@ if (!win) {
       </div>
     </div>
     <div class="section">
-      <div class="section-head">📈 Grafik Tren Kekuatan Otot</div>
+      <div class="section-head"> Grafik Tren Kekuatan Otot</div>
       <div class="section-body">
         <div id="chart-placeholder" style="width:100%;height:300px;"></div>
       </div>
     </div>
     <div class="section">
-      <div class="section-head">📋 Data Detail Sesi</div>
+      <div class="section-head"> Data Detail Sesi</div>
       <div class="section-body" style="padding:0">
         <table>
           <thead><tr><th>#</th><th>Waktu</th><th>Force (N)</th><th>Status</th></tr></thead>
@@ -719,7 +719,7 @@ async function doExportPDFGabungan() {
   </div>
   <div class="body">
     <div class="section">
-      <div class="section-head">📋 Data Tabel Sinkronisasi (2 Detik & 15 Detik)</div>
+      <div class="section-head"> Data Tabel Sinkronisasi (2 Detik & 15 Detik)</div>
       <div class="section-body" style="padding:0">
         <table>
           <thead><tr><th style="width:5%">#</th><th style="width:18%">Waktu</th><th style="width:12%">Force (N)</th><th style="width:15%">Status</th><th style="width:10%">ADC 1</th><th style="width:10%">ADC 2</th><th style="width:10%">ADC 3</th><th style="width:15%">Mean ADC</th></tr></thead>
